@@ -14,13 +14,19 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-if not "debug_toolbar.panels.sql.SQLDebugPanel" in settings.DEBUG_TOOLBAR_PANELS:
+if (
+    "debug_toolbar.panels.sql.SQLDebugPanel"
+    not in settings.DEBUG_TOOLBAR_PANELS
+):
     raise ImproperlyConfigured("debug_toolbar.panels.sql.SQLDebugPanel must be present in DEBUG_TOOLBAR_PANELS")
 
 def record_query(**kwargs):
     if hasattr(results, "_current_template"):
-        if not results._current_key in results.timings or \
-                not results._current_template in results.timings[results._current_key]:
+        if (
+            results._current_key not in results.timings
+            or results._current_template
+            not in results.timings[results._current_key]
+        ):
             return
 
         part = results.timings[results._current_key][results._current_template]
@@ -41,7 +47,7 @@ TEMPLATE_TIMINGS_SETTINGS = {
     'IGNORED_TEMPLATES': ["debug_toolbar/*"]
 }
 
-for k in TEMPLATE_TIMINGS_SETTINGS.keys():
+for k in TEMPLATE_TIMINGS_SETTINGS:
     if hasattr(settings, k):
         TEMPLATE_TIMINGS_SETTINGS[k] = getattr(settings, k)
 
@@ -117,9 +123,15 @@ def _template_render_wrapper(func, key, should_add=lambda n: True, name=lambda s
 
     return timing_hook
 
-Template.render = _template_render_wrapper(Template.render, "templates",
-                                           lambda n: not any([re.match(pattern, n)
-                                                              for pattern in TEMPLATE_TIMINGS_SETTINGS["IGNORED_TEMPLATES"]]))
+Template.render = _template_render_wrapper(
+    Template.render,
+    "templates",
+    lambda n: not any(
+        re.match(pattern, n)
+        for pattern in TEMPLATE_TIMINGS_SETTINGS["IGNORED_TEMPLATES"]
+    ),
+)
+
 BlockNode.render = _template_render_wrapper(BlockNode.render, "blocks")
 #IncludeNode.render = _template_render_wrapper(IncludeNode.render, "includes", name=lambda s: s.template_name)
 #ConstantIncludeNode.render = _template_render_wrapper(ConstantIncludeNode.render, "includes",
@@ -152,7 +164,7 @@ class TemplateTimings(DebugPanel):
 
         base_template = filter(lambda i: results["templates"][i]["is_base"] == True, results["templates"].keys())
 
-        if not len(base_template) == 1:
+        if len(base_template) != 1:
             logger.info("Found more than one base template: %s" % str(base_template))
         else:
             base_template = base_template[0]
